@@ -1,0 +1,434 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/echarts/3.8.5/echarts-en.common.min.js"></script>
+<script
+  src="https://code.jquery.com/jquery-3.2.1.min.js"
+  integrity="sha256-hwg4gsxgFZhOsEEamdOYGBf13FyQuiTwlAQgxVSNgt4="
+  crossorigin="anonymous"></script>
+<style>
+body {
+  background-color: #384466;
+  padding: 30px 0;
+  margin: 0px;
+  font: small Verdana, sans-serif;
+  font-size: 12px;
+  min-width:750px;
+  color: #343d4e;
+  background: #384466;
+  background: -webkit-gradient( color-stop(500px, #384466), color-stop(500px, #ffffff));
+  background: linear-gradient(to bottom, #384466 500px, #ffffff 500px);
+  filter: progid:DXImageTransform.Microsoft.gradient(startColorstr="#384466", endColorstr="#ffffff", GradientType=1);
+}
+div.content {
+  width: 98%;
+  align: center;
+  margin-left: auto;
+  margin-right: auto;
+}
+div.cont1{
+  background:#ffffff;
+  width:1100px;
+  margin:0 auto;
+  padding:20px 30px;
+  box-sizing:border-box;
+  border-radius:5px;
+  box-shadow:0px 0px 26px -5px #394466
+}
+.cont2{
+  padding:0;
+  padding:20px 0px!important;
+}
+.contents{
+  padding:0px 30px;
+}
+.table_head{
+  height:24px;
+}
+.table_head td{
+  padding-left:6px;
+  background:#e6ecf7;color:#77787c;
+}
+.cont1 p{
+  color:#999da5;
+}
+.cont1 table tr{
+  color:#343d4e;
+}
+.content h1{
+  color:#bfcbef;
+  width:1100px;
+  margin:0 auto;
+  line-height: 50px;
+}
+h2{
+  color:#343d4e;
+}
+.red{
+  background-color:#fe6778;
+}
+.yellow{
+  background-color:#ffbc3a;
+}
+.blue{
+  background-color:#407ded;
+}
+.gray{
+  background-color:#cfcfcf;
+}
+
+tr.table_head {
+  background-color: #d5d5d5;
+}
+
+.diff {
+  white-space: pre;
+  font-family: monospace;
+}
+
+.diff.at {
+  color: #9932CC;
+}
+
+.diff.plus {
+  color: #006400;
+}
+
+.diff.minus {
+  color: #B22222;
+}
+
+div.footer {
+  text-align: center;
+}
+
+div.note, div.override {
+  padding:4px;
+  margin:3px;
+  margin-bottom:0px;
+  margin-top:0px;
+  border: 1px solid #CCCCCC;
+  border-top: 0px;
+  background-color: #ffff90;
+}
+
+.result_head {
+  padding: 5px 30px;
+  /* margin:3px; */
+  margin-bottom:15px;
+  margin-top:10px;
+  height:50px;
+  line-height: 25px;
+  color: #FFFFFF;
+  /* border: 1px solid #CCCCCC; */
+  border-bottom: 0px;
+  background:#cfcfcf;
+}
+
+.result_head.Low {
+  background:#407ded
+}
+
+.result_head.Medium {
+  background:#ffbc3a
+}
+
+.result_head.High {
+  background:#fe6778
+}
+
+.result_section {
+  padding:4px;
+  margin:3px;
+  margin-bottom:0px;
+  margin-top:0px;
+  /* border: 1px solid #CCCCCC; */
+  border-top: 0px;
+  padding:0 30px;
+}
+
+.location_float {
+  float: right;
+  text-align:right;
+}
+
+.delta_float {
+  float: left;
+  font-size: 24px;
+  border: 2px;
+  padding-left: 2px;
+  padding-right: 8px;
+  margin:0px;
+}
+
+.full_width {
+  width: 900px;
+    display: inline-block;
+}
+.cont1_left{
+  width:50%;float:left;
+}
+.cont1_right{
+  width: 50%;
+  float: right;
+  overflow:hidden;
+}
+.location_float{
+  line-height: 52px;
+}
+pre {
+ white-space: pre-wrap;
+ word-wrap: break-word;
+}
+/*箭头部分*/  
+.down-arrow {  
+    width: 30px;  
+    height: 30px;  
+    float: right;
+    margin-top:19px;
+    transition: all 0.5s;
+    -moz-transition: all 0.5s; /* Firefox 4 */
+    -webkit-transition: all 0.5s; /* Safari 和 Chrome */
+    -o-transition: all 0.5s; /* Opera */
+}  
+.down-arrow-down{
+  margin-top:17px;
+  transition: all 0.5s;
+  -moz-transition: all 0.5s; /* Firefox 4 */
+  -webkit-transition: all 0.5s; /* Safari 和 Chrome */
+  -o-transition: all 0.5s; /* Opera */
+}
+.down-arrow:after {  
+  content: '';
+  display: block;
+  width: 12px;
+  height: 12px;
+  border-right: 2px solid #fff;
+  border-top: 2px solid #fff;
+  -webkit-transform: rotate(45deg);
+  transform: rotate(45deg);
+  transition: all 0.5s;
+  -moz-transition: all 0.5s; /* Firefox 4 */
+  -webkit-transition: all 0.5s; /* Safari 和 Chrome */
+  -o-transition: all 0.5s; /* Opera */
+  float: right;
+  border-radius: 2px;
+}  
+.down-arrow-down:after{
+  -webkit-transform: rotate(135deg);
+  transform: rotate(135deg);
+  transition: all 0.5s;
+  -moz-transition: all 0.5s; /* Firefox 4 */
+  -webkit-transition: all 0.5s; /* Safari 和 Chrome */
+  -o-transition: all 0.5s; /* Opera */
+}
+        </style>
+<title>ENN - 安全检测报告</title>
+</head>
+<body><div class="content">
+    <h1>报告总结</h1>
+<div class="cont1">
+  <div style="height:180px;">
+    <div class="cont1_left">
+      <p>
+      依据ISO27001信息安全管理体系标准 & 信息安全信息系统安全等级保护测评
+      </p>
+      <p>
+      其它信息安全标准 - CCE通用配置枚举 & CVE通用漏洞与纰漏
+      </p>
+      <table>
+      <tr>
+      <td>扫描开始时间:</td>
+      <td><b>{{BeginTime}}</b></td>
+      </tr>
+      <tr>
+      <td>扫描结束时间:</td>
+      <td>{{EndTime}}</td>
+      </tr>
+      <tr>
+      <td>任务目标:</td>
+      <td>{{Target}}</td>
+      </tr>
+      </table>
+    </div>
+    <div class="cont1_right">
+        <div id="main" style="width:100%;height:200px;"></div>
+    </div>
+  </div>
+  <h2>主机总结</h2>
+  <table width="100%">
+  <tr class="table_head">
+  <td style="background:#e6ecf7;color:#77787c;">主机</td>
+  <td style="background:#e6ecf7;color:#77787c;">开始时间</td>
+  <td style="background:#e6ecf7;color:#77787c;">结束时间</td>
+  <td style="background:#fe6778;color:#ffffff;">高危</td>
+  <td style="background:#ffbc3a;color:#ffffff;">中危</td>
+  <td style="background:#407ded;color:#ffffff;">低危</td>
+  <td style="background:#e6ecf7;color:#77787c;">信息</td>
+  <td style="background:#e6ecf7;color:#77787c;">错误</td>
+  </tr>
+  <tr>
+  <td><a>{{Target}}</a></td>
+  <td>{{BeginTime}}</td>
+  <td>{{EndTime}}</td>
+  <td id="High">{{High}}</td>
+  <td id="Medium">{{Medium}}</td>
+  <td id="Low">{{Low}}</td>
+  <td id="Log">{{Log}}</td>
+  <td>{{FalsePositive}}</td>
+  </tr>
+  <tr>
+  <td>Total: 1</td>
+  <td></td>
+  <td></td>
+  <td>{{High}}</td>
+  <td>{{Medium}}</td>
+  <td>{{Low}}</td>
+  <td>{{Log}}</td>
+  <td>{{FalsePositive}}</td>
+  </tr>
+  </table>
+</div>
+
+<h1>主机扫描结果</h1>
+<div class="cont1 cont2">
+<div class="contents">
+  <h2>{{Target}}</h2>
+  <table>
+  <tr>
+  <td>扫描开始时间:</td>
+  <td>{{BeginTime}}</td>
+  </tr>
+  <tr>
+  <td>扫描信息数量:</td>
+  <td>{{Number}}</td>
+  </tr>
+  </table>
+  <h3>主机端口总结:{{Target}}</h3>
+  <table width="100%">
+  <tr class="table_head">
+  <td>服务IP</td>
+  <td>端口协议</td>
+  <td>威胁分数</td>
+  <td>危险级别</td>
+  </tr>
+
+
+  {% for x in Ports %}
+  <tr>
+  <td>{{x[0]}}</td>
+  <td>{{x[1]}}</td>
+  <td>{{x[2]}}</td>
+  <td>{{x[3]}}</td>
+  </tr>
+  {%end%}
+
+
+  </table>
+
+  <h3>主机相关问题详情:{{Target}}</h3>
+</div>
+
+{% for y in Results %}
+<div>
+<div class="result_head {{y[11]}}">
+    <div><a href="javascript:void(0)" class="down-arrow"></a></div>
+<div class="location_float">{{y[2]}}</div>
+
+<b>{{y[11]}}</b>
+                     (CVSS: {{y[12]}})
+                  <div class="full_width">
+            {{y[0]}}
+          </div>
+</div>
+  <div class="result_content" style="display:none;">
+    <div class="result_section">
+    <b>总结</b><p>{{y[15]}}</p>
+    </div>
+    <div class="result_section">
+    <b>所发现的易受攻击结果</b><pre>{{y[10]}}</pre>
+    </div>
+    <div class="result_section">
+    <b>解决办法</b><p><b>解决方式类型: </b>{{y[17]}}</p>
+    <p>{{y[16]}}</p>
+    </div>
+    <div class="result_section">
+    <b>易受攻击分析</b>
+        <p>{{y[13]}}</p>
+    </div>
+    <div class="result_section">
+    <b>易受攻击验证方法</b><p>{{y[14]}}</p>
+    </div>
+    <div class="result_section">
+    <b>参考</b><br><p><table>
+    {{y[9]}}
+    </table>
+  </div>
+</div>
+</div>
+{%end%}
+</div>
+</div>
+</body>
+<script> 
+$(document).ready(function(){
+  var myChart = echarts.init(document.getElementById('main'));
+  var High = document.getElementById('High').innerHTML;
+  var Medium = document.getElementById('Medium').innerHTML;
+  var Low = document.getElementById('Low').innerHTML;
+  var Log = document.getElementById('Log').innerHTML;
+  var option = {
+    title : {
+        text: '某站点用户访问来源',
+        subtext: '纯属虚构',
+        show:false,
+        x:'center'
+    },
+    tooltip : {
+        trigger: 'item',
+        formatter: "{a} <br/>{b} : {c} ({d}%)"
+    },
+    legend: {
+        orient: 'vertical',
+        left: 'left',
+        show:false,
+        data: ['高危','中危','低危','信息']
+    },
+    series : [
+        {
+            name: '百分比',
+            type: 'pie',
+            radius : '75%',
+            center: ['60%', '53%'],
+            data:[
+                {value:High, name:'高危'},
+                {value:Medium, name:'中危'},
+                {value:Low, name:'低危'},
+                {value:Log, name:'信息'}
+            ],
+            itemStyle: {
+                emphasis: {
+                    shadowBlur: 10,
+                    shadowOffsetX: 0,
+                    shadowColor: 'rgba(0, 0, 0, 0.5)'
+                }
+            }
+        }
+    ],
+    color: ['rgb(254,102,119)','rgb(255,188,57)','rgb(64,125,237)','rgb(230,236,247)']
+  };
+  myChart.setOption(option);
+
+  $('.result_head').unbind().on('click',function(){
+    console.log($(this).find('a'))
+    if($(this).find('.down-arrow').hasClass('down-arrow-down')){
+      $(this).find('.down-arrow').removeClass('down-arrow-down')
+    }else{
+      $(this).find('.down-arrow').addClass('down-arrow-down')
+    }
+    $(this).next().stop(true, false).slideToggle(500)
+  })
+})
+</script>
+</html>

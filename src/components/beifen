@@ -1,0 +1,900 @@
+<template>
+  <div class="hello" v-loading="scanloding" :class="{listShow:listShow}" :element-loading-text="loadingText"
+    element-loading-background="rgba(0, 0, 0, 0.4)">
+    <div class="index-login" :class="{loginshow:loginshow}">
+      <div class="loginBox" style="">
+        <div class="login">
+          <!-- <h1>登录</h1> -->
+          <!-- <p class="error">登录失败</p> -->
+          <div class="close">
+            <span class="cha" @click="loginClose">×</span>
+          </div>
+          <form method="post" style="width:240px; margin: 0 auto;">
+            <!--<label for="username">Username</label>:-->
+            <div class="username">
+              <i class="iconfont icon-denglu-copy"></i>
+              <input type="text" id="user" name="username" v-model="username" placeholder="Username" autofocus="autofocus" />
+            </div>
+            <div class="password">
+              <i class="iconfont icon-mima"></i>
+            <input type="password" id="password" @keyup.enter="login" v-model="password" placeholder="Password" name="password" />
+            </div>
+            <input type="button" class="button" @click="login" value="登录" />
+          </form>
+        </div>
+      </div>
+    </div>
+    <div class="header">
+      <span v-if="showUser" class="name"><span>HI,{{this.showUser}}</span> <i class="iconfont icon-tuichu" @click="quit"></i></span>
+      <span v-else  class="user" @click="loginShows">
+        <!-- <i class="fa fa-user-o"></i> -->
+        <i class="iconfont icon-denglu-copy"></i>
+      </span>
+    </div>
+    <div class="logo">
+      <!-- <img class="" src="../assets/images/logo.png"> -->
+    </div>
+    <div class="scan">
+      <input type="text" v-model="ip_url" class="scanInput" placeholder="请输入IP/URL">
+      <el-select v-model="scanSelect" placeholder="请选择">
+        <el-option
+          v-for="item in options"
+          :key="item.value"
+          :label="item.label"
+          :value="item.value"
+          :disabled="item.disabled">
+        </el-option>
+      </el-select>
+      <span class="shu">|</span>
+      <!-- <i class="iconfont icon-jiance" style="font-size:32px;"></i> -->
+      <img src="../assets/images/search.png" @click="search" class="search" alt="">
+    </div>
+    <div class="message">
+      <p style="font-size:20px;">依据ISO27001信息安全管理体系标准 & 信息安全信息系统安全等级保护测评</p>
+      <p style="font-size:12px;">According to ISO27001 information security management system standard & Evaluation of information security information system security level protection</p>
+      <p style="color:#818db1;font-size:14px;margin-top:20px;">其它信息安全标准 - CCE通用配置枚举 & CVE通用漏洞与纰漏</p>
+    </div>
+    <div class="history">
+      <a @click="getLists()">
+        <span></span>
+        <span></span>
+        <!-- <span></span> -->
+        查看列表
+      </a>
+    </div>
+    <div class="content" style="margin-top:45px;">
+      
+      <div v-if="scanList.length == 0" style="line-height:40px;">
+        <div style="margin:0 auto;">暂无数据</div>
+      </div>
+      <div v-else style="height:100%;">
+      <div class="title">
+        <ul>
+          <li>任务名称</li>
+          <li>任务进度</li>
+          <li>任务开始时间</li>
+          <li>任务结束时间</li>
+          <li>操作</li>
+        </ul>
+      </div>
+      <div class="contents">
+        <!-- <div v-if="loading" style="display:inline-block;margin:0 auto;position: relative;"><i style="color:#407ded;font-size:20px;margin-top:-2px;" class="fa-li fa fa-spinner fa-spin"></i>加载中...</div> -->
+        <div style="min-height:63px;" class="lists">
+          <ul v-loading="loading"  element-loading-text=" 拼命加载中 ~ ">
+            <li v-for="item in scanList">
+              <ul> 
+                <li>{{item.ip_url}}</li>
+                <li v-if="item.progress != '100.0'"><span ><i class="fa-li fa fa-spinner fa-spin"></i>{{item.progress+'%'}}</span></li>
+                <li v-else><span ><i class="iconfont icon-chenggong"></i>扫描完成</span></li>
+                <li>{{item.begin_time}}</li>
+                <li>{{item.end_time?item.end_time:'－'}}</li>
+                <li v-if="item.progress != '100.0' " >
+                  <a  class="disabled"><i class="iconfont icon-yulan"></i></a>
+                  <a class="disabled"><i class="iconfont icon-shanchu"></i></a>
+                </li>
+                <li v-else :class="[item.vul == '1'?'chenggong':(item.vul == '-1'?'shibai':'') ]" >
+                  <div class="biaoqian"><span>失败</span></div>
+                  <div class="operation">
+                    <a target="_blank" :href="item.download"><i class="iconfont icon-yulan"></i></a>
+                    <a @click="deleteList(item.id)"><i class="iconfont icon-shanchu"></i></a>
+                  </div>
+                  <button v-if="item.vul != '0' " v-bind:disabled=" item.vul !='' && item.vul != '-2'  " class="utilize" @click="utilize(item.id)" style="margin-left:6px;padding-left:8px;">利用</button>
+                  <button v-else disabled="true" class="utilize" style="margin-left:10px;">利用中...</button>
+                </li>
+              </ul>
+            </li>
+          </ul>
+        </div>
+        <div class="block" style="margin-bottom:20px;">
+          <el-pagination style="padding-left: 20px;float: left;"
+            layout="prev, pager, next"
+            @current-change = "handleCurrentChange"
+            :page-size="size"
+            :current-page="index"
+            :total="total">
+          </el-pagination>
+        </div>
+      </div>
+      </div>
+    </div>
+  </div>
+</template>
+
+<script>
+import axios from "axios";
+export default {
+  name: "HelloWorld",
+  data() {
+    return {
+      msg: "Welcome to Your Vue.js App",
+      scanUrl: "https://scan.enncloud.cn",
+      listShow: false,
+      loginshow: false,
+      scanloding: false,
+      loadingText: " 玩命下发中 ~ ",
+      options: [
+        {
+          value: 0,
+          label: "深度检测"
+        },
+        {
+          value: 1,
+          label: "自定义",
+          disabled: true
+        }
+      ],
+      total: 0,
+      scanSelect: 0,
+      username: "",
+      password: "",
+      ip_url: "",
+      loading: false,
+      myTimeout: "",
+      size: 5,
+      scanList: [],
+      index: 0,
+      showUser: sessionStorage.getItem("username"),
+      uid: sessionStorage.getItem("uid")
+    };
+  },
+  beforeCreate: function() {},
+  created: function() {
+    // this.getList();
+    let _this = this; //此this指向的是vue
+    // window.onmousewheel = function (e) {
+    //   if(e.wheelDelta<0 && !_this.listShow){
+    //     _this.listShow = true;
+    //     _this.getList();
+    //   }
+    // }
+  },
+  methods: {
+    search: function() {
+      const _this = this;
+      if (sessionStorage.getItem("uid")) {
+        if (this.ip_url != "") {
+          this.loadingText = " 玩命下发中 ~ ";
+          this.scanloding = true;
+          axios
+            .post(this.scanUrl + "/scan", {
+              uid: this.uid,
+              ip_url: this.ip_url
+            })
+            .then(
+              function(data) {
+                if (data.data.code == 200) {
+                  _this.ip_url = "";
+                  _this.loading = true;
+                  _this.index = 0;
+                  _this.scanloding = false;
+                  _this.getList();
+                } else {
+                  _this.scanloding = false;
+                  _this.$message({
+                    message: "下发任务失败",
+                    type: "warning"
+                  });
+                }
+              },
+              function(error) {}
+            );
+        }
+      } else {
+        this.$message({
+          message: "请登录之后进行操作。",
+          type: "warning"
+        });
+      }
+    },
+    getLists: function() {
+      if (sessionStorage.getItem("uid")) {
+        this.scanloding = true;
+        this.loadingText = " 拼命加载中 ~ ";
+        this.getList();
+      } else {
+        this.$message({
+          message: "请登录之后进行操作。",
+          type: "warning"
+        });
+      }
+    },
+    utilize: function(id) {
+      axios
+        .post(this.scanUrl + "/vul", {
+          id : id
+        })
+        .then(function(data) {
+          console.log(data,'--------data')
+          if (data.data.code == 200) {
+            this.$message({
+              message: "开始利用！",
+              type: ""
+            });
+          }else {
+            
+          }
+        });
+    },
+    deleteList: function(id) {
+      const _this = this;
+      axios.post(_this.scanUrl + "/delete", { id: id }).then(function(data) {
+        if (data.data.code == 200) {
+          _this.getList();
+        }
+      });
+    },
+    getList: function() {
+      const _this = this;
+      if (sessionStorage.getItem("uid")) {
+        axios
+          .post(_this.scanUrl + "/list", {
+            uid: _this.uid,
+            size: _this.size,
+            index: _this.index
+          })
+          .then(function(data) {
+            if (data.data.code == 200) {
+              _this.scanList = data.data.list;
+              _this.scanloding = false;
+              _this.listShow = true;
+              _this.loading = false;
+              _this.total = data.data.total;
+              _this.myTimeout = setTimeout(function() {
+                _this.getList();
+                console.log("wahaha", new Date());
+                clearTimeout(_this.myTimeout);
+              }, 3000);
+            } else {
+              _this.scanloding = false;
+              _this.listShow = false;
+              // _this.$message({
+              //   message: '列表为空，请先下发任务。',
+              //   type: 'error'
+              // });
+            }
+          });
+      } else {
+        this.$message({
+          message: "请登录之后进行操作。",
+          type: "warning"
+        });
+      }
+    },
+    handleCurrentChange: function(val) {
+      console.log(val);
+      this.index = val;
+      this.loading = true;
+      this.getList();
+    },
+    loginShows: function() {
+      this.loginshow = true;
+    },
+    loginClose: function() {
+      this.loginshow = false;
+    },
+    quit: function() {
+      this.showUser = false;
+      sessionStorage.setItem("uid", "");
+      sessionStorage.setItem("username", "");
+      window.location.reload();
+    },
+    login: function() {
+      const _this = this;
+      const data = { uid: this.username, passwd: this.password };
+      axios.post(this.scanUrl + "/login", data).then(userdata => {
+        if (userdata.data.code == 200) {
+          _this.loginshow = false;
+          _this.username = "";
+          _this.password = "";
+          _this.showUser = userdata.data.cn[0];
+          _this.uid = userdata.data.uid[0];
+          sessionStorage.setItem("uid", userdata.data.uid[0]);
+          sessionStorage.setItem("username", userdata.data.cn[0]);
+        } else {
+          this.$message({
+            message: "登录失败,请重新登录。",
+            type: "warning"
+          });
+        }
+      });
+    }
+  }
+};
+</script>
+<!-- Add "scoped" attribute to limit CSS to this component only -->
+<style lang="less">
+.el-message {
+  border-radius: 20px;
+  height: 20px;
+  background: #ffffff;
+  border: 0;
+}
+.el-message--warning .el-message__content {
+  font-size: 12px;
+  font-weight: normal;
+}
+@bg : #253258;
+@size : #a0b0dc;
+h1,
+h2 {
+  font-weight: normal;
+}
+.shibai{
+  .biaoqian{
+    height: 80px;
+    top: -25px;
+    right: -19px;
+    width:100px;
+    position: absolute;
+    background-color:rgba(255,0,255,0);
+    background: url('../assets/images/biaoqian.png') no-repeat center;
+    // background-position: 100%;
+    background-size:100% 100%;  
+    span{
+      font-size:12px;color:#fff;text-align: center;
+      line-height: 12px;
+      margin-top: -25px;
+      font-weight: bold;
+    }
+  }
+}
+.hello {
+  height: 100%;
+}
+.logo {
+  
+  height: 120px;
+  margin-top: 100px;
+  padding-left: 80px;
+}
+.header {
+  
+  padding-right: 25px;
+  padding-top: 15px;
+  padding-bottom: 10px;
+}
+.user {
+  display: inline-block;
+  border: 1px solid #b5c1e5;
+  border-radius: 17px;
+  height: 28px;
+  width: 28px;
+  float: right;
+  i.icon-denglu-copy {
+    font-size: 16px;
+    color: #b5c1e5;
+    line-height: 30px;
+    cursor: pointer;
+  }
+}
+.operation{
+  height: 24px;line-height: 24px;
+  display: inline-block;
+}
+.utilize{
+  position: absolute;
+  width:70px;
+  text-align: left;
+  cursor: pointer;
+  padding-left:5px;
+  // color:#28314c;
+  border:0px;
+  background: rgba(0,0,0,0);
+  font-size:13px;
+  border-left:1px solid #ccc;
+  height: 22px;line-height: 22px;
+  top:16px;
+}
+.name {
+  display: inline-block;
+  border-radius: 17px;
+  height: 30px;
+  width: auto;
+  
+  float: right;
+  i.icon-tuichu {
+    font-size: 16px;
+    color: #b5c1e5;
+    float: right;
+    line-height: 30px;
+    cursor: pointer;
+  }
+  span {
+    color: @size;
+    font-size: 14px;
+    float: left;
+    line-height: 30px;
+    margin-right: 10px;
+  }
+}
+.shu {
+  float: left;
+  color: rgb(42, 65, 118);
+  font-weight: 500;
+  font-size: 20px;
+  line-height: 50px;
+}
+.scan {
+  
+  width: 700px;
+  height: 50px;
+  border: 0;
+  background-color: @bg;
+  border-radius: 25px;
+  outline: none;
+  color: @size;
+  line-height: 50px;
+  font-size: 14px;
+  margin: 0 auto;
+  margin-top: 30px;
+  .scanInput {
+    background-color: @bg;
+    width: 510px;
+    height: 50px;
+    line-height: 50px;
+    border: 0;
+    float: left;
+    outline: none;
+    color: @size;
+    box-sizing: border-box;
+    padding: 0 20px;
+    font-size: 14px;
+  }
+  .scanInput::-webkit-input-placeholder {
+    color: @size;
+  }
+  .scanInput:-moz-placeholder {
+    color: @size;
+  }
+  .scanInput::-moz-placeholder {
+    color: @size;
+  }
+  .scanInput:-ms-input-placeholder {
+    color: @size;
+  }
+  .search {
+    vertical-align: middle;
+    cursor: pointer;
+  }
+  .user {
+    cursor: pointer;
+  }
+  .el-select {
+    float: left;
+    width: 110px;
+    border: 0;
+    .el-input__inner {
+      background-color: @bg;
+      border: 0;
+      color: @size;
+      font-weight: bold;
+    }
+
+    .el-select__caret {
+      color: #407ded;
+      font-size: 18px;
+    }
+
+    .el-icon-arrow-up:before {
+      content: "\E60C";
+    }
+  }
+}
+.el-message-box {
+  border-radius: 15px;
+}
+.el-message-box__message {
+  color: @bg;
+}
+.message {
+  width: 700px;
+  margin: 0 auto;
+  margin-top: 50px;
+  p {
+    color: #bfcbef;
+    font-family: "Ya Hei";
+    text-align: left;
+    margin: 0;
+    margin-top: 10px;
+  }
+}
+.el-popper .popper__arrow {
+  display: none;
+}
+.el-popper[x-placement^="bottom"] {
+  margin-top: 5px;
+}
+.el-select-dropdown {
+  background-color: @bg;
+  color: #ffffff;
+  color: #fff;
+  border: 0;
+  .el-select-dropdown__item {
+    color: @size;
+  }
+  .el-select-dropdown__item.hover,
+  .el-select-dropdown__item:hover {
+    background-color: @bg;
+  }
+  .el-select-dropdown__item.selected {
+    color: #409eff;
+  }
+}
+.content {
+  background-color: #e8ecf7;
+  height: 0;
+  position: fixed;
+  bottom: 0;
+  width: 100%;
+  
+  .title {
+    width: 1100px;
+    margin: 0 auto;
+    ul {
+      
+      margin: 0;
+      padding: 0 20px;
+      li {
+        list-style: none;
+        float: left;
+        width: 20%;
+        text-align: center;
+        line-height: 50px;
+        font-size: 14px;
+        color: #9298ab;
+      }
+    }
+  }
+  .contents {
+    width: 1100px;
+    margin: 0 auto;
+    overflow-y: auto;
+    > .lists ul {
+      margin: 0;
+      padding: 0 20px;
+      > li {
+        height: 60px;
+        line-height: 60px;
+        list-style: none;
+        position: relative;
+        background-color: #ffffff;
+        margin-bottom: 20px;
+        border-radius: 5px;
+
+        > ul {
+          
+          padding: 0;
+          height: 60px;
+          border-radius: 5px;
+          &:hover {
+            box-shadow: 0px 8px 18px -3px #a0b0dc;
+            border-left: 4px solid #407ded;
+          }
+          li {
+            float: left;
+            width: 20%;
+            list-style: none;
+            font-size: 14px;
+            color: #28314c;
+            
+            span {
+              display: inline-block;
+              vertical-align: middle;
+              position: relative;
+              margin-left: 30px;
+              .icon-chenggong {
+                color: #71d4a9;
+              }
+              .fa-li {
+                left: -2em;
+                top: 0.2em;
+              }
+              i.fa-spinner {
+                font-size: 26px;
+                margin-top: 10px;
+                color: #407ded;
+              }
+              .icon-chenggong {
+                color: #71d4a9;
+                font-size: 26px;
+                position: absolute;
+                left: -34px;
+              }
+            }
+            a {
+              cursor: pointer;
+              list-style: none;
+              outline: none;
+              text-decoration: none;
+            }
+            .icon-yulan,
+            .icon-shanchu {
+              font-size: 20px;
+              margin: 0 5px;
+              color: #407ded;
+            }
+            .disabled {
+              i {
+                color: @size;
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}
+
+.listShow {
+  .logo {
+    height: 0;
+    margin-top: 0px;
+    opacity: 0;
+    transition: all 1s;
+    -moz-transition: all 1s; /* Firefox 4 */
+    -webkit-transition: all 1s; /* Safari 和 Chrome */
+    -o-transition: all 1s; /* Opera */
+  }
+  .message {
+    opacity: 0;
+    transition: all 1s;
+    -moz-transition: all 1s; /* Firefox 4 */
+    -webkit-transition: all 1s; /* Safari 和 Chrome */
+    -o-transition: all 1s; /* Opera */
+  }
+  .scan {
+    margin-top: 0;
+    transition: all 1s;
+    -moz-transition: all 1s; /* Firefox 4 */
+    -webkit-transition: all 1s; /* Safari 和 Chrome */
+    -o-transition: all 1s; /* Opera */
+  }
+}
+.listShow {
+  .content {
+    height: calc(~"100% - 150px");
+    transition: all 1s;
+    -moz-transition: all 1s; /* Firefox 4 */
+    -webkit-transition: all 1s; /* Safari 和 Chrome */
+    -o-transition: all 1s; /* Opera */
+  }
+  .contents {
+    height: calc(~"100% - 70px");
+    padding-top: 20px;
+  }
+}
+.index-login {
+  -webkit-transition: all 1s linear;
+  -moz-transition: all 1s linear;
+  -ms-transition: all 1s linear;
+  -o-transition: all 1s linear;
+  transition: all 1s linear;
+  z-index: 100;
+  opacity: 0;
+  display: table;
+  width: 100%;
+  margin: 0 auto;
+  position: fixed;
+  height: 100%;
+  visibility: hidden;
+  background: #303855b3;
+}
+.loginshow {
+  -webkit-transition: all 1s linear;
+  -moz-transition: all 1s linear;
+  -ms-transition: all 1s linear;
+  -o-transition: all 1s linear;
+  transition: all 1s linear;
+  opacity: 1;
+  visibility: visible;
+}
+// .bg{
+//     background-color: rgba(0,175,95, 1);
+//     height:100%;width:100%;
+//     position: fixed;
+// }
+.loginBox {
+  display: table-cell; /*让元素以表格的单元素格形式渲染*/
+  vertical-align: middle; /*使用元素的垂直对齐*/
+}
+.login {
+  width: 362px;
+  height: 266px;
+  
+  background-color: #ffffff;
+  border-radius: 20px;
+  margin: 0 auto;
+  form input {
+    width: calc(~"100% - 40px");
+    height: 30px;
+    box-sizing: content-box;
+    border: 0;
+    color: #000000;
+    text-align: left;
+    padding: 0 5px;
+    box-sizing: border-box;
+    padding: 0 5px;
+    outline: none;
+  }
+  form input[type="text"],
+  form input[type="password"] {
+    background: #f3f4f8;
+    float: left;
+  }
+  .password,
+  .username {
+    i {
+      width: 40px;
+      float: left;
+      line-height: 30px;
+      color: #ffffff;
+    }
+    border-radius: 20px;
+    
+    margin-bottom: 20px;
+    background: #bfccef; /* Old browsers */
+    background: -moz-linear-gradient(
+      left,
+      #bfccef 15%,
+      #f3f4f8 15%
+    ); /* FF3.6-15 */
+    background: -webkit-linear-gradient(
+      left,
+      #bfccef 15%,
+      #f3f4f8 15%
+    ); /* Chrome10-25,Safari5.1-6 */
+    background: linear-gradient(
+      to right,
+      #bfccef 15%,
+      #f3f4f8 15%
+    ); /* W3C, IE10+, FF16+, Chrome26+, Opera12+, Safari7+ */
+    filter: progid:DXImageTransform.Microsoft.gradient(
+        startColorstr="#bfccef",
+        endColorstr="#f3f4f8",
+        GradientType=1
+      ); /* IE6-9 */
+  }
+  .password {
+    margin-bottom: 30px;
+  }
+  input::-ms-input-placeholder {
+    text-align: left;
+    color: #bbb;
+  }
+  input::-webkit-input-placeholder {
+    text-align: left;
+    color: #bbb;
+  }
+  form .button {
+    height: 30px;
+    width: 100%;
+    margin: 0 auto;
+    border-radius: 20px;
+    color: #ffffff;
+    text-align: center;
+    font-weight: bold;
+    cursor: pointer;
+    background: -webkit-linear-gradient(
+      left,
+      #c36aea,
+      #407cea
+    ); /* Safari 5.1 - 6.0 */
+    background: -o-linear-gradient(
+      right,
+      #c36aea,
+      #407cea
+    ); /* Opera 11.1 - 12.0 */
+    background: -moz-linear-gradient(
+      right,
+      #c36aea,
+      #407cea
+    ); /* Firefox 3.6 - 15 */
+    background: linear-gradient(to right, #c36aea, #407cea); /* 标准的语法（必须放在最后） */
+  }
+}
+.login h1 {
+  color: #ffffff;
+}
+.close {
+  color: #000;
+  font-size: 16px;
+  display: block;
+  width: 100%;
+  text-align: right;
+  box-sizing: border-box;
+  padding: 15px;
+  margin-bottom: 10px;
+  .cha {
+    cursor: pointer;
+    width: 30px;
+    height: 30px;
+  }
+}
+.history {
+  position: fixed;
+  cursor: pointer;
+  bottom: 50px;
+  left: 50%;
+  margin-left: -28px;
+  // top: 200px;
+  a {
+    padding-top: 60px;
+    font-size: 14px;
+    position: relative;
+    color: @size;
+    text-decoration: none;
+  }
+  a span {
+    position: absolute;
+    top: 0;
+    left: 50%;
+    width: 24px;
+    height: 24px;
+    margin-left: -12px;
+    border-left: 1px solid #fff;
+    border-bottom: 1px solid #fff;
+    -webkit-transform: rotate(-45deg);
+    transform: rotate(-45deg);
+    -webkit-animation: sdb07 2s infinite;
+    animation: sdb07 2s infinite;
+    opacity: 0;
+    box-sizing: border-box;
+  }
+  a span:nth-of-type(1) {
+    -webkit-animation-delay: 0s;
+    animation-delay: 0s;
+  }
+  a span:nth-of-type(2) {
+    top: 16px;
+    -webkit-animation-delay: 0.15s;
+    animation-delay: 0.15s;
+  }
+  a span:nth-of-type(3) {
+    top: 32px;
+    -webkit-animation-delay: 0.3s;
+    animation-delay: 0.3s;
+  }
+  @-webkit-keyframes sdb07 {
+    0% {
+      opacity: 0;
+    }
+    50% {
+      opacity: 1;
+    }
+    100% {
+      opacity: 0;
+    }
+  }
+  @keyframes sdb07 {
+    0% {
+      opacity: 0;
+    }
+    50% {
+      opacity: 1;
+    }
+    100% {
+      opacity: 0;
+    }
+  }
+}
+</style>
